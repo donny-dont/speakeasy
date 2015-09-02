@@ -1,0 +1,11 @@
+# Path to a directory where packages will be stored
+storage: ./storage
+
+# A list of other known pub repositories that can be accessed
+proxies:
+  dartlang:
+    url: https://pub.dartlang.org
+
+packages:
+  '*':
+    proxy: dartlang
