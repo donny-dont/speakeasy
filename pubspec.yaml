@@ -1,0 +1,14 @@
+name: speakeasy
+author: Don Olmstead <don.j.olmstead@gmail.com>
+homepage: https://github.com/donny-dont/speakeasy
+version: 0.0.1
+environment:
+  sdk: '>=1.12.0 <2.0.0'
+description: A private pub server for Dart
+dependencies:
+  pub_server: '^0.1.1'
+  shelf: '^0.5.0'
+  archive: '^1.0.20'
+  http: '^0.11.3+2'
+  logging: '^0.11.1+1'
+  args: '^0.13.2'
