@@ -1,0 +1,5 @@
+build:
+  image: google/dart:latest
+  pull: true
+  commands:
+    - sh build.sh
