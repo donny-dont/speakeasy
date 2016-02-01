@@ -29,6 +29,7 @@ class HttpProxyRepository extends PackageRepository {
           '/api/packages/${Uri.encodeComponent(package)}');
 
       http.Response response = await client.get(versionUrl);
+      try {
       var json = JSON.decode(response.body);
       var versions = json['versions'];
       if (versions != null) {
@@ -40,6 +41,9 @@ class HttpProxyRepository extends PackageRepository {
         }).toList();
       }
       return const [];
+      } catch (error) {
+      	return const [];
+      }
     }
 
     var controller = new StreamController();

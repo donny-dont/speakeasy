@@ -35,22 +35,16 @@ class CopyAndWriteRepository extends PackageRepository {
         this._localCache = new _RemoteMetadataCache(local),
         this._remoteCache = new _RemoteMetadataCache(remote);
 
-  Stream<PackageVersion> versions(String package) {
-    var controller;
+  Stream<PackageVersion> versions(String package) async* {
 
-    onListen() {
-      Future.wait([_localCache.fetchVersionlist(package),
-      _remoteCache.fetchVersionlist(package)]).then((tuple) {
-        var versions = new Set()
-          ..addAll(tuple[0])
-          ..addAll(tuple[1]);
-        for (var version in versions) controller.add(version);
-        controller.close();
-      });
+    for (_RemoteMetadataCache repo in [_localCache,_remoteCache]) {
+      List<PackageVersion> _versions = await repo.fetchVersionlist(
+          package);
+      for (PackageVersion _version in _versions) {
+        yield _version;
+      }
     }
 
-    controller = new StreamController(onListen: onListen);
-    return controller.stream;
   }
 
   Future<PackageVersion> lookupVersion(String package, String version) {
@@ -109,19 +103,32 @@ class _RemoteMetadataCache {
   final PackageRepository remote;
 
   Map<String, Set<PackageVersion>> _versions = {};
+  Map<String,DateTime> _expires ={};
   Map<String, Completer<Set<PackageVersion>>> _versionCompleters = {};
 
   _RemoteMetadataCache(this.remote);
 
-  // TODO: After a cache expiration we should invalidate entries and re-fetch
-  // them.
+
   Future<List<PackageVersion>> fetchVersionlist(String package) {
+    DateTime now = new DateTime.now();
+    new Map<String,DateTime>()
+      ..addAll(_expires)
+      ..forEach((String package,DateTime val)  {
+        if (now.isAfter(val)) {
+          _expires.remove(package);
+          _versions.remove(package);
+          _versionCompleters.remove(package);
+        }
+      });
+
+
     return _versionCompleters.putIfAbsent(package, () {
       var c = new Completer();
 
       _versions.putIfAbsent(package, () => new Set());
       remote.versions(package).toList().then((versions) {
         _versions[package].addAll(versions);
+        _expires[package] = now.add(new Duration(minutes:10));
         c.complete(_versions[package]);
       });
 
