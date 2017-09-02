@@ -64,12 +64,18 @@ Future<Null> main(List<String> args) async {
 
   // Just start up the server for now
   var server = new ShelfPubServer(cowRepository);
-
+  var internetAddressTypeStr = config['internetAddressType'];
+  var internetAddressType = InternetAddressType.ANY;
+  if (internetAddressTypeStr == 'IP_V4') {
+    internetAddressType = InternetAddressType.IP_V4;
+  } else if (internetAddressTypeStr == 'IP_V6') {
+    internetAddressType = InternetAddressType.IP_V6;
+  }
   // Get the address based on the IP address
-  var interfaces = await NetworkInterface.list();
+  var interfaces = await NetworkInterface.list(type: internetAddressType);
   var address = interfaces[0].addresses.first.address;
 
-  var port = 8080;
+  int port = config['port'] ?? 8080;
 
   shelf_io.serve(server.requestHandler, address, port);
 
