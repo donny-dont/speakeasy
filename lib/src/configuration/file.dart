@@ -29,7 +29,6 @@ Future<Map> writeDefaultConfiguration(String path) async {
   var packageUri = Uri.parse('package:speakeasy/src/configuration/default.yml');
   var fileUri = await Isolate.resolvePackageUri(packageUri);
   var filePath = pathLib.fromUri(fileUri);
-  print(filePath);
   var contents = await new File(filePath).readAsString();
 
   // Write the contents to the path
