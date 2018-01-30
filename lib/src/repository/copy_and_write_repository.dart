@@ -9,7 +9,8 @@ import 'dart:async';
 import 'package:logging/logging.dart';
 import 'package:pub_server/repository.dart';
 
-final Logger _logger = new Logger('speakeasy.src.repository.copy_and_write_repository;');
+final Logger _logger =
+    new Logger('speakeasy.src.repository.copy_and_write_repository;');
 
 /// A [CopyAndWriteRepository] writes to one repository and directs
 /// read-misses to another repository.
@@ -36,21 +37,19 @@ class CopyAndWriteRepository extends PackageRepository {
         this._remoteCache = new _RemoteMetadataCache(remote);
 
   Stream<PackageVersion> versions(String package) async* {
-
-    for (_RemoteMetadataCache repo in [_localCache,_remoteCache]) {
-      List<PackageVersion> _versions = await repo.fetchVersionlist(
-          package);
+    for (_RemoteMetadataCache repo in [_localCache, _remoteCache]) {
+      List<PackageVersion> _versions = await repo.fetchVersionlist(package);
       for (PackageVersion _version in _versions) {
         yield _version;
       }
     }
-
   }
 
   Future<PackageVersion> lookupVersion(String package, String version) {
     return versions(package)
         .where((pv) => pv.versionString == version)
-        .toList().then((List<PackageVersion> versions) {
+        .toList()
+        .then((List<PackageVersion> versions) {
       if (versions.length >= 1) return versions.first;
       return null;
     });
@@ -103,17 +102,16 @@ class _RemoteMetadataCache {
   final PackageRepository remote;
 
   Map<String, Set<PackageVersion>> _versions = {};
-  Map<String,DateTime> _expires ={};
+  Map<String, DateTime> _expires = {};
   Map<String, Completer<Set<PackageVersion>>> _versionCompleters = {};
 
   _RemoteMetadataCache(this.remote);
 
-
   Future<List<PackageVersion>> fetchVersionlist(String package) {
     DateTime now = new DateTime.now();
-    new Map<String,DateTime>()
+    new Map<String, DateTime>()
       ..addAll(_expires)
-      ..forEach((String package,DateTime val)  {
+      ..forEach((String package, DateTime val) {
         if (now.isAfter(val)) {
           _expires.remove(package);
           _versions.remove(package);
@@ -121,19 +119,21 @@ class _RemoteMetadataCache {
         }
       });
 
+    return _versionCompleters
+        .putIfAbsent(package, () {
+          var c = new Completer();
 
-    return _versionCompleters.putIfAbsent(package, () {
-      var c = new Completer();
+          _versions.putIfAbsent(package, () => new Set());
+          remote.versions(package).toList().then((versions) {
+            _versions[package].addAll(versions);
+            _expires[package] = now.add(new Duration(minutes: 10));
+            c.complete(_versions[package]);
+          });
 
-      _versions.putIfAbsent(package, () => new Set());
-      remote.versions(package).toList().then((versions) {
-        _versions[package].addAll(versions);
-        _expires[package] = now.add(new Duration(minutes:10));
-        c.complete(_versions[package]);
-      });
-
-      return c;
-    }).future.then((set) => set.toList());
+          return c;
+        })
+        .future
+        .then((set) => set.toList());
   }
 
   void addVersion(String package, PackageVersion version) {

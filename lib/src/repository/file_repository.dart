@@ -47,7 +47,8 @@ class FileRepository extends PackageRepository {
   Future<PackageVersion> lookupVersion(String package, String version) {
     return versions(package)
         .where((pv) => pv.versionString == version)
-        .toList().then((List<PackageVersion> versions) {
+        .toList()
+        .then((List<PackageVersion> versions) {
       if (versions.length >= 1) return versions.first;
       return null;
     });
@@ -55,44 +56,54 @@ class FileRepository extends PackageRepository {
 
   bool get supportsUpload => true;
 
-  Future upload(Stream<List<int>> data) {
+  Future upload(Stream<List<int>> data) async {
     _logger.info('Start uploading package.');
-    return data.fold(new BytesBuilder(), (b, d) => b..add(d)).then((bb) {
-      var tarballBytes = bb.takeBytes();
-      var tarBytes = new GZipDecoder().decodeBytes(tarballBytes);
-      var archive = new TarDecoder().decodeBytes(tarBytes);
-      var pubspecArchiveFile;
-      for (var file in archive.files) {
-        if (file.name == 'pubspec.yaml') {
-          pubspecArchiveFile = file;
-          break;
-        }
+    BytesBuilder bb = new BytesBuilder();
+    await for (List<int> d in data) {
+      bb.add(d);
+    }
+
+    _logger.info('Received ${bb.length} bytes, decompressing archive');
+
+    var tarballBytes = bb.takeBytes();
+    var tarBytes = new GZipDecoder().decodeBytes(tarballBytes);
+    var archive = new TarDecoder().decodeBytes(tarBytes);
+    var pubspecArchiveFile;
+
+    _logger.info(
+        'Found ${archive.files.length} files in archive, looking for pubspec');
+    for (var file in archive.files) {
+      _logger.info('File: ${file.name}');
+      if (file.name == 'pubspec.yaml') {
+        pubspecArchiveFile = file;
+        _logger.info('found!');
+        break;
       }
-      if (pubspecArchiveFile != null) {
-        // TODO: Error handling.
-        var pubspec = loadYaml(UTF8.decode(pubspecArchiveFile.content));
+    }
+    if (pubspecArchiveFile != null) {
+      // TODO: Error handling.
+      var pubspec = loadYaml(UTF8.decode(pubspecArchiveFile.content));
 
-        var package = pubspec['name'];
-        var version = pubspec['version'];
+      var package = pubspec['name'];
+      var version = pubspec['version'];
 
-        var packageVersionDir =
-        new Directory(path.join(baseDir, package, version));
-        var pubspecFile = new File(pubspecFilePath(package, version));
-        var tarballFile = new File(packageTarballPath(package, version));
+      var packageVersionDir =
+          new Directory(path.join(baseDir, package, version));
+      var pubspecFile = new File(pubspecFilePath(package, version));
+      var tarballFile = new File(packageTarballPath(package, version));
 
-        if (!packageVersionDir.existsSync()) {
-          packageVersionDir.createSync(recursive: true);
-        }
-        pubspecFile.writeAsBytesSync(pubspecArchiveFile.content);
-        tarballFile.writeAsBytesSync(tarballBytes);
-
-        _logger.info('Uploaded new $package/$version');
-      } else {
-        _logger.warning('Did not find any pubspec.yaml file in upload. '
-            'Aborting.');
-        throw 'No pubspec file.';
+      if (!packageVersionDir.existsSync()) {
+        packageVersionDir.createSync(recursive: true);
       }
-    });
+      pubspecFile.writeAsBytesSync(pubspecArchiveFile.content);
+      tarballFile.writeAsBytesSync(tarballBytes);
+
+      _logger.info('Uploaded new $package/$version');
+    } else {
+      _logger.warning('Did not find any pubspec.yaml file in upload. '
+          'Aborting.');
+      throw 'No pubspec file.';
+    }
   }
 
   bool get supportsDownloadUrl => false;
@@ -109,9 +120,9 @@ class FileRepository extends PackageRepository {
     }
   }
 
-  String pubspecFilePath(String package, String version)
-  => path.join(baseDir, package, version, 'pubspec.yaml');
+  String pubspecFilePath(String package, String version) =>
+      path.join(baseDir, package, version, 'pubspec.yaml');
 
-  String packageTarballPath(String package, String version)
-  => path.join(baseDir, package, version, 'package.tar.gz');
+  String packageTarballPath(String package, String version) =>
+      path.join(baseDir, package, version, 'package.tar.gz');
 }

@@ -25,34 +25,37 @@ class HttpProxyRepository extends PackageRepository {
 
   Stream<PackageVersion> versions(String package) {
     Future<List<PackageVersion>> fetch() async {
-      Uri versionUrl = baseUrl.resolve(
-          '/api/packages/${Uri.encodeComponent(package)}');
+      Uri versionUrl =
+          baseUrl.resolve('/api/packages/${Uri.encodeComponent(package)}');
 
       http.Response response = await client.get(versionUrl);
       try {
-      var json = JSON.decode(response.body);
-      var versions = json['versions'];
-      if (versions != null) {
-        return versions.map((Map item) {
-          var pubspec = item['pubspec'];
-          var pubspecString = JSON.encode(pubspec);
-          return new PackageVersion(
-              pubspec['name'], pubspec['version'], pubspecString);
-        }).toList();
-      }
-      return const [];
+        var json = JSON.decode(response.body);
+        var versions = json['versions'];
+        if (versions != null) {
+          return versions.map((Map item) {
+            var pubspec = item['pubspec'];
+            var pubspecString = JSON.encode(pubspec);
+            return new PackageVersion(
+                pubspec['name'], pubspec['version'], pubspecString);
+          }).toList();
+        }
+        return const [];
       } catch (error) {
-      	return const [];
+        return const [];
       }
     }
 
     var controller = new StreamController();
 
-    fetch().then((List<PackageVersion> packageVersions) {
-      for (var packageVersion in packageVersions) {
-        controller.add(packageVersion);
-      }
-    }).catchError(controller.addError).whenComplete(controller.close);
+    fetch()
+        .then((List<PackageVersion> packageVersions) {
+          for (var packageVersion in packageVersions) {
+            controller.add(packageVersion);
+          }
+        })
+        .catchError(controller.addError)
+        .whenComplete(controller.close);
 
     return controller.stream;
   }
@@ -63,7 +66,8 @@ class HttpProxyRepository extends PackageRepository {
   Future<PackageVersion> lookupVersion(String package, String version) {
     return versions(package)
         .where((v) => v.packageName == package && v.versionString == version)
-        .toList().then((List<PackageVersion> versions) {
+        .toList()
+        .then((List<PackageVersion> versions) {
       if (versions.length >= 1) return versions.first;
       return null;
     });

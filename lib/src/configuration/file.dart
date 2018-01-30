@@ -1,6 +1,6 @@
-
 import 'dart:async';
 import 'dart:io';
+import 'package:resource/resource.dart';
 
 import 'package:yaml/yaml.dart';
 
@@ -25,7 +25,8 @@ Future<Map> readConfiguration(String path) async {
 /// The default configuration will be returned by the function.
 Future<Map> writeDefaultConfiguration(String path) async {
   // Get the contents of the resource
-  var resource = new Resource('package:speakeasy/src/configuration/default.yml');
+  var resource =
+      new Resource('package:speakeasy/src/configuration/default.yml');
   var contents = await resource.readAsString();
 
   // Write the contents to the path

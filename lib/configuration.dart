@@ -10,4 +10,3 @@ library speakeasy.configuration;
 //---------------------------------------------------------------------
 
 export 'src/configuration/file.dart';
-

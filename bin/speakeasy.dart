@@ -35,7 +35,7 @@ Future<Null> main(List<String> args) async {
 
   // Parse the arguments
   var parser = new ArgParser()
-      ..addOption(_configOption, defaultsTo: 'config.yml');
+    ..addOption(_configOption, defaultsTo: 'config.yml');
 
   var parsed = parser.parse(args);
 
@@ -58,7 +58,8 @@ Future<Null> main(List<String> args) async {
   //
   // \TODO More than one :)
   var httpClient = new http.Client();
-  var pubRepository = new HttpProxyRepository(httpClient, Uri.parse(config['proxies']['dartlang']['url']));
+  var pubRepository = new HttpProxyRepository(
+      httpClient, Uri.parse(config['proxies']['dartlang']['url']));
 
   var cowRepository = new CopyAndWriteRepository(fileRepository, pubRepository);
 
@@ -88,15 +89,20 @@ void printClientUsage(String address, int port, bool isSecure) {
   var scheme = isSecure ? 'https' : 'http';
   var hostedUrl = '$scheme://$address:$port';
 
-  print('################################################################################');
-  print('The pub command uses environment variables to specify the registry to use.');
-  print('If you want to setup pub to work with this registry run the following commands:\n');
+  print(
+      '################################################################################');
+  print(
+      'The pub command uses environment variables to specify the registry to use.');
+  print(
+      'If you want to setup pub to work with this registry run the following commands:\n');
   print('POSIX OS');
   print('\$ export PUB_HOSTED_URL=$hostedUrl\n');
   print('WINDOWS');
   print('\$ SET PUB_HOSTED_URL=$hostedUrl\n');
-  print('To prevent pub publish from unintentially publishing to the pub.dartlang.org');
+  print(
+      'To prevent pub publish from unintentially publishing to the pub.dartlang.org');
   print('registry include the following in the package pubspec.yml\n');
   print('publish_to: $hostedUrl');
-  print('################################################################################');
+  print(
+      '################################################################################');
 }
