@@ -1,7 +1,8 @@
 
 import 'dart:async';
 import 'dart:io';
-
+import 'dart:isolate';
+import 'package:path/path.dart' as pathLib;
 import 'package:yaml/yaml.dart';
 
 /// Reads the configuration file from the [path].
@@ -25,8 +26,10 @@ Future<Map> readConfiguration(String path) async {
 /// The default configuration will be returned by the function.
 Future<Map> writeDefaultConfiguration(String path) async {
   // Get the contents of the resource
-  var resource = new Resource('package:speakeasy/src/configuration/default.yml');
-  var contents = await resource.readAsString();
+  var packageUri = Uri.parse('package:speakeasy/src/configuration/default.yml');
+  var fileUri = await Isolate.resolvePackageUri(packageUri);
+  var filePath = pathLib.fromUri(fileUri);
+  var contents = await new File(filePath).readAsString();
 
   // Write the contents to the path
   var file = new File(path);

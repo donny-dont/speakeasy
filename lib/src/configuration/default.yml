@@ -1,6 +1,12 @@
 # Path to a directory where packages will be stored
 storage: ./storage
-
+# Assigned internet address type
+# Possible values
+# - ANY
+# - IP_V4
+# - IP_V6
+internetAddressType: ANY
+port: 8080
 # A list of other known pub repositories that can be accessed
 proxies:
   dartlang:
